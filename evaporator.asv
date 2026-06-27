@@ -1,0 +1,65 @@
+function [Qdot_evap, hOut_evap, POut_evap, tOut_air_evap, M_evap, DP_ref_evap] = evaporator(P_4, h_4, mdot_exp)
+
+% Inputs:
+% - P_4: pressures at state 4 (in kPa)
+% - hOut_exp: Specific Enthalpy (kJ/kg) at the exit of the expansion valve
+% - mdot_exp: Mass flow rate at the exit of the expansion valve (in kg/s)
+% Outputs:
+% - Qdot_evap: heat transfer rate in the evaporator (in W)
+% - hOut_evap: specific enthalpy at the evaporator outlet (in kJ/kg)
+% - POut_evap: pressure at the evaporator outlet (in kPa)
+% - tOut_air_evap: temperature of air leaving the evaporator (in K)
+
+%% ===== defining parameters for the evaporator =====
+L_evap = 10; % Length (m)
+U_evap = 1.7e4; %Overall Heat transfer coefficient (W/m2/K)
+D_evap = 9.525e-3; %Tube Diameter (m)
+A_evap = 7.477e-3*5; % Heat transfer area (m^2)
+f_evap = 1; % Friction factor
+mdot_air_evap = 0.6669; %0.6669; %0.1879; %Mass flow rate of air (kg/s)
+tIn_air_evap = 299.82; %283.82;%299.82; % Inlet Air Temperature (K)
+Cp_air_evap = 1005.5; % Specific heat capacity at constant pressure (J/kg/K)
+
+% Define the refrigerant
+% CoolProp
+Ref = 'R410A';
+pyenv('Version','C:\Program Files\Python311\python.exe');
+
+rho_4 = py.CoolProp.CoolProp.PropsSI('D', ...
+    'P', P_4*1e3, 'H', h_4*1e3, Ref);
+Tsat_evap = py.CoolProp.CoolProp.PropsSI('T', ...
+    'P', P_4*1e3, 'Q', 0, Ref);
+Tsat_cond = py.CoolProp.CoolProp.PropsSI('T', ...
+    'P', P_2*1e3, 'Q', 1, Ref);
+
+% Calculate the refrigerant Properties
+% [rho_4, ~] = density_ph(P_4, h_4);
+% [~, Tsat_evap, ~] = Temp_ph(P_4, h_4);
+% 
+% disp(['rho_4: ', num2str(rho_4)])
+% disp(['d: ', num2str(d)])
+% disp(['Tsat_evap: ', num2str(Tsat_evap)])
+% disp(['Ts: ', num2str(Ts)])
+
+mdot_evap = mdot_exp;
+
+mflux = mdot_evap/A_evap;
+
+%% Calculate models at state 4-1
+Qdot_evap = U_evap*A_evap*(Tsat_evap-tIn_air_evap);
+
+hOut_evap = h_4 - (Qdot_evap/mdot_evap)*1e-3;
+
+% DP_ref_evap = (2*f_evap*L_evap*mdot_evap.^2/(pi*rho_4*D_evap));
+
+DP_ref_evap = (2*f_evap*L_evap*(mflux)^2/(D_evap*rho_4))*1e-03;
+
+POut_evap = P_4 - DP_ref_evap;
+
+M_evap = pi*(D_evap/2)^2*L_evap*rho_4;
+
+tOut_air_evap = tIn_air_evap + Qdot_evap/(mdot_air_evap*Cp_air_evap); 
+
+% disp("=========Evaporator run completed==========")
+
+end
