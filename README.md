@@ -141,6 +141,5 @@ Validation against experimental or manufacturer data
 Developed as part of a vapor compression cycle modeling study using MATLAB, CoolProp, and FSOLVE nonlinear equation solving.
 
 
-
 <img width="1236" height="985" alt="image" src="https://github.com/user-attachments/assets/f87789a9-6a06-4fdc-9df7-dc676504a75a" />
 
